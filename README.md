@@ -28,7 +28,7 @@ Public dataset, used here for independent analysis and modeling practice.
 - Built KPI cards and breakdown visuals in Power BI: Warehouse Utilization Rate, Inventory
   Turnover Ratio, Time for Inventory Sales, lead time by category, order status distribution,
   transportation cost by region/category, and inventory level by category/region.
-- Cross-validated the key findings below with standalone SQL queries (`/sql/analysis_queries.sql`)
+- Cross-validated the key findings below with standalone SQL queries (check sql_queries file)
   rather than relying on dashboard visuals alone.
 
 ## Key Findings
