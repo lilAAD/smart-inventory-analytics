@@ -1,62 +1,73 @@
-# smart-inventory-analytics
-# 📦 Inventory & Supply Chain Management Analysis - Power BI Dashboard
+# Where Is Inventory Actually Getting Stuck? — Smart Inventory Analytics
 
-This Power BI project showcases an end-to-end analysis of inventory and supply chain metrics, enabling better visibility, trend monitoring, and performance optimization across multiple business dimensions.
+An inventory and fulfillment performance analysis across four product categories and four
+regions, investigating whether order delays are a sourcing problem or a fulfillment problem,
+and whether regional cost differences are actually explained by inventory volume.
 
-## 📊 Dashboard Highlights
+## Business Problem
 
-The dashboard includes:
+A multi-category, multi-region distribution operation wants to understand two things: (1) where
+order fulfillment is breaking down — is it supplier lead time, or something inside the
+warehouse/fulfillment process — and (2) whether regional transportation cost differences are
+driven by how much inventory each region holds, or by something else (route, distance, shipment
+frequency). Getting this wrong means optimizing the wrong lever — e.g., renegotiating supplier
+contracts when the real problem is warehouse throughput.
 
-- **Warehouse Utilization Rate**  
-  Visualized with a gauge chart to track how efficiently warehouse space is used.
-  
-- **Key KPIs**  
-  - Time for Inventory Sales  
-  - Inventory Turnover Ratio  
-  - Warehouse Utilization Rate
+## Dataset Source
 
-- **Sales & Logistics Insights**  
-  - Sum of Units Sold by Year  
-  - Sum of Transportation Cost by Region and Category
+Inventory and Supply Chain dataset — category-level and region-level records covering inventory
+levels, lead time, order status, transportation cost, warehouse utilization, and units sold across
+Clothing, Electronics, Furniture, and Accessories in the East, North, South, and West regions.
+Public dataset, used here for independent analysis and modeling practice.
 
-- **Inventory & Backorder Analysis**  
-  - Sum of Inventory Level by Region & Category  
-  - Count of Backorder by Order Status
+## Approach
 
-- **Supply Chain Efficiency**  
-  - Average Lead Time (Days) by Category  
+- Profiled the flat source table in SQL first — row counts, null checks, and category/region
+  cardinality — before building any Power BI measures, to confirm the data was clean enough to
+  trust at face value.
+- Built KPI cards and breakdown visuals in Power BI: Warehouse Utilization Rate, Inventory
+  Turnover Ratio, Time for Inventory Sales, lead time by category, order status distribution,
+  transportation cost by region/category, and inventory level by category/region.
+- Cross-validated the key findings below with standalone SQL queries (`/sql/analysis_queries.sql`)
+  rather than relying on dashboard visuals alone.
 
-## 🔧 Tools Used
+## Key Findings
 
-- **Power BI Desktop**
-- **DAX (Data Analysis Expressions)**
-- **Data Modeling & Transformations**
-- **Custom Measures and KPIs**
-- **Slicers for interactivity**
+**1. Lead time barely varies by category — so fulfillment delays are more likely an internal
+process issue than a supplier issue.** Average lead time ranges from 15.29 days (Clothing) to
+16.60 days (Accessories), a spread of under 1.5 days across all four categories. If supplier-side
+sourcing were driving delays, categories with more complex supply chains would show noticeably
+longer lead times than simpler ones — they don't. That points investigation toward internal
+fulfillment capacity (warehouse processing, pick/pack throughput, order prioritization) rather
+than procurement.
 
-## 📁 Dataset
+**2. Roughly 30% of all orders are not landing in "Fulfilled" status — a bigger lever than any
+single region or category.** Of all order records, 69.8% are Fulfilled, 20.7% Pending, and 9.5%
+Canceled. Before optimizing transportation cost by region or inventory by category, the more
+urgent priority is understanding why one in five orders sits in Pending — fixing that would move
+overall performance more than any single regional or category-level tweak.
 
-The data includes fields such as:
+**3. Regional transportation cost differences don't line up cleanly with regional inventory
+volume — suggesting cost is driven more by route or shipment frequency than by stock levels.**
+Inventory holdings are fairly evenly distributed across East, North, South, and West within each
+category, with no single region consistently holding the most stock. Yet East and West show the
+highest transportation costs. If cost were purely a function of how much inventory a region
+carries, the highest-inventory region would also show the highest cost — that alignment isn't
+present here, which is a reason to investigate route/logistics factors before assuming inventory
+volume is the driver.
 
-- Inventory Level  
-- Order Status  
-- Category  
-- Region  
-- Units Sold  
-- Lead Time  
-- Transportation Cost  
-- Warehouse Utilization
+## Business Recommendations
 
-## 🧠 Insights Enabled
+- **Prioritize a fulfillment-process review over supplier renegotiation.** The flat lead time
+  across categories suggests the ~30% of orders stuck in Pending/Canceled is more likely explained
+  by internal capacity constraints than supplier delays — start there.
+- **Treat the Pending-order share as the primary KPI to move**, ahead of category- or
+  region-specific optimizations, since it represents the largest single share of unresolved
+  volume in the dataset.
+- **Investigate route and shipment-frequency data for East and West** before assuming
+  transportation cost is inventory-driven — since inventory levels don't clearly explain the
+  cost gap, the fix may be in logistics routing rather than warehouse stocking policy.
 
-- Identify bottlenecks in warehouse usage and backorders.
-- Monitor transportation expenses by region.
-- Track yearly sales performance.
-- Analyze inventory levels across product categories.
+## Tools Used
 
-## 📌 How to Use
-
-1. Clone the repository.
-2. Open the `.pbix` file in Power BI Desktop.
-3. Refresh data or connect to a live source (if applicable).
-4. Explore the dashboard and interact with slicers and visuals.
+Power BI (KPI dashboard, DAX measures) · SQL (data profiling, validation queries)
