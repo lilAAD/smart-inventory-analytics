@@ -1,0 +1,93 @@
+-- Smart Inventory Analytics - SQL validation queries
+-- Dataset: Inventory and Supply Chain Dataset (single flat table)
+-- Written for SQLite, should also run on BigQuery
+-- Columns used: Category, Region, Order Status, YearOnly, Backorder, Inventory Level,
+-- Inventory TurnOver Ratio, Lead Time (Days), Transportation Cost, Units Sold,
+-- Warehouse Utilization Rate, Time for Inventory Sales
+-- adjust column names if they don't match your source file exactly
+
+-- 1. Data profiling - row counts, nulls, cardinality checks
+SELECT COUNT(*) AS total_rows FROM inventory_supply_chain;
+
+SELECT Category, COUNT(*) AS row_count
+FROM inventory_supply_chain
+GROUP BY Category
+ORDER BY row_count DESC;
+
+SELECT Region, COUNT(*) AS row_count
+FROM inventory_supply_chain
+GROUP BY Region
+ORDER BY row_count DESC;
+
+-- checking nulls before trusting any aggregation
+SELECT
+    SUM(CASE WHEN [Lead Time (Days)] IS NULL THEN 1 ELSE 0 END) AS null_lead_time,
+    SUM(CASE WHEN [Transportation Cost] IS NULL THEN 1 ELSE 0 END) AS null_transport_cost,
+    SUM(CASE WHEN [Inventory Level] IS NULL THEN 1 ELSE 0 END) AS null_inventory_level
+FROM inventory_supply_chain;
+
+
+-- 2. Lead time by category
+-- checking if lead time actually varies much across categories
+SELECT
+    Category,
+    ROUND(AVG([Lead Time (Days)]), 2) AS avg_lead_time,
+    MIN([Lead Time (Days)]) AS min_lead_time,
+    MAX([Lead Time (Days)]) AS max_lead_time
+FROM inventory_supply_chain
+GROUP BY Category
+ORDER BY avg_lead_time DESC;
+
+
+-- 3. Order status distribution
+-- quantifying how much volume is NOT fulfilled
+SELECT
+    [Order Status],
+    COUNT(*) AS order_count,
+    ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM inventory_supply_chain), 2) AS pct_of_total
+FROM inventory_supply_chain
+GROUP BY [Order Status]
+ORDER BY order_count DESC;
+
+-- same thing broken down by category, checking if pending/cancelled
+-- orders are concentrated in one category or spread out evenly
+SELECT
+    Category,
+    [Order Status],
+    COUNT(*) AS order_count
+FROM inventory_supply_chain
+GROUP BY Category, [Order Status]
+ORDER BY Category, order_count DESC;
+
+
+-- 4. Inventory level and transportation cost by region and category
+-- checking if higher transport cost regions are just the ones holding more stock
+SELECT
+    Region,
+    Category,
+    SUM([Inventory Level]) AS total_inventory,
+    SUM([Transportation Cost]) AS total_transport_cost
+FROM inventory_supply_chain
+GROUP BY Region, Category
+ORDER BY Region, total_transport_cost DESC;
+
+-- region level rollup, ranking by inventory and by cost side by side
+-- to see if the two rankings actually line up or not
+SELECT
+    Region,
+    SUM([Inventory Level]) AS total_inventory,
+    RANK() OVER (ORDER BY SUM([Inventory Level]) DESC) AS inventory_rank,
+    SUM([Transportation Cost]) AS total_transport_cost,
+    RANK() OVER (ORDER BY SUM([Transportation Cost]) DESC) AS cost_rank
+FROM inventory_supply_chain
+GROUP BY Region
+ORDER BY cost_rank;
+
+
+-- 5. Units sold trend by year
+SELECT
+    YearOnly,
+    SUM([Units Sold]) AS total_units_sold
+FROM inventory_supply_chain
+GROUP BY YearOnly
+ORDER BY YearOnly;
